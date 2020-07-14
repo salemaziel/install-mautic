@@ -1,0 +1,127 @@
+.panel-back {
+	height:200px;
+}
+.right-panel {
+	width:50%;
+	float:right;
+	text-align:center;
+}
+.left-panel {
+	width:50%;
+	float:left;
+}
+#gautit-backup-btn {
+	font-size: 25px;
+    background: #066DBC;
+    color: #fff;
+    text-align: center;
+    border: 0px;
+    padding: 15px;
+    margin-top: 70px;
+    display: block;
+    width: 50%;
+    float: right;
+    margin-right: 46px;
+}
+.panel-log {
+	height:50px;
+}
+#gautit-backup-status {
+	font-size:15px;
+	font-weight:600;
+}
+
+#progressbar {
+  border-radius: 13px; /* (height of inner div) / 2 + padding */
+  padding: 3px;
+}
+    
+#progressbar > div {
+   background-color: #066DBC;
+   width: 100%; /* Adjust with JavaScript */
+   height: 20px;
+   border-radius: 10px;
+}
+#gautit-existing-backup .alert-warning p{
+	display:none;
+}
+
+
+
+/* Style the tab */
+.tab {
+  float: left;
+  border-right: 1px solid #ccc;
+  background-color: #f1f1f1;
+  width: 25%;
+  min-height: 500px;
+}
+
+/* Style the buttons inside the tab */
+.tab a {
+  display: block;
+  background-color: inherit;
+  color: black;
+  padding: 14px 16px;
+  width: 100%;
+  border: none;
+  outline: none;
+  text-align: left;
+  cursor: pointer;
+  transition: 0.3s;
+  font-size: 17px;
+}
+.tab a span.dropbox {
+	background-image:url('../img/dropbox.png');
+	width: 42px;
+	display: block;
+	height: 36px;
+	float: left;
+}
+.tab a span.s3 {
+	background-image:url('../img/s3.png');
+	width: 40px;
+	display: block;
+	height: 36px;
+	float: left;
+}
+.tab a span.googledrive {
+	background-image:url('../img/googledrive.png');
+	width: 40px;
+	display: block;
+	height: 36px;
+	float: left;
+}
+.tab a span.onedrive {
+	background-image:url('../img/onedrive.png');
+	width: 40px;
+	display: block;
+	height: 36px;
+	float: left;
+}
+.tab a span.text {
+	padding-left: 10px;
+    padding-top: 6px;
+    display: block;
+}
+
+/* Change background color of buttons on hover */
+.tab a:hover {
+  background-color: #ddd;
+}
+
+/* Create an active/current "tab button" class */
+.tab a.active {
+  background-color: #066DBC;
+  color:#fff;
+}
+
+/* Style the tab content */
+.tabcontent {
+  float: left;
+  padding: 0px 12px;
+  border: 1px solid #ccc;
+  width: 75%;
+  border-left: none;
+  min-height: 500px;
+}
