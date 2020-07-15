@@ -16,6 +16,8 @@ read -p "Database Name: " name_4_db
 read -p "Database Username: " db_username
 read -p "Full Domain Name to install to: " install_domain
 read -p "Email address: " email_address
+read -p "Mailgun user (postmaster):  " mailgun_user
+read -p "Mailgun password:  " mailgun_pass
 
 echo "*********************************************"
 echo " These are the Configurations you entered: "
@@ -25,6 +27,8 @@ echo "db name is '$name_4_db' "
 echo "db username is '$db_username' "
 echo "domain is '$install_domain' "
 echo "email address is '$email_address' "
+echo "mailgun user is '$mailgun_user' "
+echo "mailgun pass is '$mailgun_pass' "
 sleep 2
 read -p "Are these correct?[y/n] " correct_confs
 if test $correct_confs == "n"; then
@@ -138,7 +142,7 @@ if ! echo "
     ServerName $domain
 #    ServerAlias www.$domain
 #    Redirect permanent / https://$domain.com/
-    #DocumentRoot $web_root
+    DocumentRoot $web_root
     #<Directory />
     #    AllowOverride All
     #</Directory>
@@ -209,9 +213,10 @@ smtp_sasl_security_options = noanonymous
 echo "DONT FORGET TO TAKE OUT THE EXTRA RELAYHOST AND DEFAULT/RELATRANSPORT ERRORS"
 sleep 5
 
-echo "DONT FORGET TO TAKE OUT THE EXTRA RELAYHOST AND DEFAULT/RELATRANSPORT ERRORS IN POSTFIX" > $HOME/dont-forget.txt
+echo "DONT FORGET TO TAKE OUT THE EXTRA RELAYHOST AND DEFAULT/RELATRANSPORT ERRORS IN POSTFIX" > dont-forget.txt
 
 echo "[smtp.mailgun.org]:2525 $mailgun_user:$mailgun_pass" > /etc/postfix/sasl_passwd
+
 postmap /etc/postfix/sasl_passwd
 
 chmod 600 /etc/postfix/sasl_passwd*
@@ -224,6 +229,21 @@ echo 'Test passed. Email setup for marketing.d8thc.shop' | mail -s 'Test-Email-d
 
 tail -n 5 /var/log/syslog
 
+
+crontab ./crontab.txt
+
+unzip plugins.zip 
+
+cp -n -r plugins/* $web_root/plugins/
+
+chown -R www-data:www-data $web_root/
+systemctl enable apache2
+systemctl enable mysql
+
+/etc/init.d/apache2 restart
+
+
+sudo -u www-data php $web_root/app/console cache:clear
 
 
 #wget https://mauteam.org/wp-content/uploads/2019/10/cron-jobs.txt
