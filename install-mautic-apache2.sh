@@ -120,23 +120,23 @@ chmod -R g+w media/images/
 chmod -R g+w translations/
 
 ### check if domain already exists
-if [ -e $sitesAvailabledomain ]; then
-    echo -e "This domain already exists.\nRemoving...."
+##if [ -e $sitesAvailabledomain ]; then
+#    echo -e "This domain already exists.\nRemoving...."
 
     ### disable website
-    a2dissite $domain
+    a2dissite 000-default.conf
 
-    ### restart Apache
-    /etc/init.d/apache2 reload
+#    ### restart Apache
+#    /etc/init.d/apache2 reload
 
     ### Delete virtual host rules files
-    rm $sitesAvailabledomain
+#    rm $sitesAvailabledomain
     ### show the finished message
-    echo -e "Complete!\nVirtual Host $domain has been removed."
-fi
+#    echo -e "Complete!\nVirtual Host $domain has been removed."
+#fi
 
 ### create virtual host rules file
-if ! echo "
+echo "
 <VirtualHost 0.0.0.0:80>
     ServerAdmin $email
     ServerName $domain
@@ -156,7 +156,7 @@ if ! echo "
     #CustomLog /var/log/apache2/$domain-access.log combined
 </VirtualHost>
 
-<VirtualHost 0.0.0.0:443;
+<VirtualHost 0.0.0.0:443>
     ServerAdmin $email
     ServerName $domain
  #   ServerAlias www.$domain
@@ -175,15 +175,13 @@ if ! echo "
 </VirtualHost>
 "
 
- > $sitesAvailabledomain
-then
-    echo -e $"There is an ERROR creating $domain file"
-    exit;
-else
-    echo -e $"\nNew Virtual Host Created\n"
-fi
+ > /etc/apache2/sites-available/$domain.conf 
 
 ### enable website
+a2enmod rewrite 
+
+systemctl restart apache2
+
 a2ensite $domain
 
 ini=$(sudo find /etc/ -name php.ini | grep 'apache2')
@@ -212,6 +210,7 @@ smtp_sasl_security_options = noanonymous
 
 echo "DONT FORGET TO TAKE OUT THE EXTRA RELAYHOST AND DEFAULT/RELATRANSPORT ERRORS"
 sleep 5
+nano /etc/postfix/main.cf
 
 echo "DONT FORGET TO TAKE OUT THE EXTRA RELAYHOST AND DEFAULT/RELATRANSPORT ERRORS IN POSTFIX" > dont-forget.txt
 
@@ -225,14 +224,15 @@ chmod 600 /etc/postfix/sasl_passwd*
 
 apt -y install mailutils
 
-echo 'Test passed. Email setup for marketing.d8thc.shop' | mail -s 'Test-Email-d8thc.shop' $email
+echo 'Test passed. Email setup for marketing.delta-8.shop' | mail -s 'Test-Email-delta-8.shop' $email
 
 tail -n 5 /var/log/syslog
 
 
-crontab ./crontab.txt
+crontab crontab.txt
+mkdir plugins
 
-unzip plugins.zip 
+unzip plugins-all.zip -d plugins/
 
 cp -n -r plugins/* $web_root/plugins/
 
