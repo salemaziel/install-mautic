@@ -15,7 +15,7 @@ read -p "Database Password: " db_passwd
 read -p "Database Name: " name_4_db
 read -p "Database Username: " db_username
 read -p "Full Domain Name to install to: " install_domain
-read -p "Email address: " email_address 
+read -p "Email address: " email_address
 
 echo "*********************************************"
 echo " These are the Configurations you entered: "
@@ -55,11 +55,9 @@ export DEBIAN_FRONTEND=noninteractive
 if [  -n "$(uname -a | grep Ubuntu)" ]; then
         echo `lsb_release -d | grep -oh Ubuntu.*`
 
-        echo " ** Updating the repository with Certbot ** "
-        add-apt-repository -y ppa:certbot/certbot
         apt-get update
         echo " ** Installing LAMP packages **"
-        apt-get --assume-yes install apache2 mysql-server php php-cli libapache2-mod-php php-mysql unzip python-certbot-apache
+        apt-get --assume-yes install apache2 mysql-server php php-cli libapache2-mod-php php-mysql unzip python3-certbot-apache certbot libmcrypt4
         apt-get --assume-yes install php-zip php-xml php-imap php-opcache php-apcu php-memcached php-mbstring php-curl php-amqplib php-mbstring php-bcmath php-intl
 
 
@@ -135,10 +133,29 @@ fi
 
 ### create virtual host rules file
 if ! echo "
-<VirtualHost *:80>
+<VirtualHost 0.0.0.0:80>
     ServerAdmin $email
     ServerName $domain
-    ServerAlias www.$domain
+#    ServerAlias www.$domain
+#    Redirect permanent / https://$domain.com/
+    #DocumentRoot $web_root
+    #<Directory />
+    #    AllowOverride All
+    #</Directory>
+    #<Directory $web_root>
+    #    Options Indexes FollowSymLinks MultiViews
+    #    AllowOverride all
+    #    Require all granted
+    #</Directory>
+    #ErrorLog /var/log/apache2/$domain-error.log
+    #LogLevel error
+    #CustomLog /var/log/apache2/$domain-access.log combined
+</VirtualHost>
+
+<VirtualHost 0.0.0.0:443;
+    ServerAdmin $email
+    ServerName $domain
+ #   ServerAlias www.$domain
     DocumentRoot $web_root
     <Directory />
         AllowOverride All
@@ -151,7 +168,10 @@ if ! echo "
     ErrorLog /var/log/apache2/$domain-error.log
     LogLevel error
     CustomLog /var/log/apache2/$domain-access.log combined
-</VirtualHost>" > $sitesAvailabledomain
+</VirtualHost>
+"
+
+ > $sitesAvailabledomain
 then
     echo -e $"There is an ERROR creating $domain file"
     exit;
@@ -171,17 +191,55 @@ sed 's#^;*date\.timezone[[:space:]]=.*$#date.timezone = "'"$timezone"'"#' $ini >
 #Setup SSL for https
 certbot -d $domain --non-interactive --redirect --keep-until-expiring --agree-tos --apache -m $email
 
-(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:segments:update > /dev/null 2>&1") | crontab -
-(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:campaigns:trigger > /dev/null 2>&1") | crontab -
-(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:campaigns:rebuild > /dev/null 2>&1") | crontab -
-(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:iplookup:download > /dev/null 2>&1") | crontab -
-(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:emails:send > /dev/null 2>&1") | crontab -
-(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:email:fetch > /dev/null 2>&1") | crontab -
-(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:social:monitoring > /dev/null 2>&1") | crontab -
-(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:webhooks:process > /dev/null 2>&1") | crontab -
-(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:broadcasts:send > /dev/null 2>&1") | crontab -
-(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:import > /dev/null 2>&1") | crontab -
-(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:campaigns:process_resets > /dev/null 2>&1") | crontab -
+cd ;
+
+umask 077
+apt update && apt -y install postfix libsasl2-modules
+echo "
+# default_transport = error
+# relay_transport = error
+relayhost = [smtp.mailgun.org]:2525
+
+smtp_tls_security_level = encrypt
+smtp_sasl_auth_enable = yes
+smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+smtp_sasl_security_options = noanonymous
+" | tee -a /etc/postfix.main.cf
+
+echo "DONT FORGET TO TAKE OUT THE EXTRA RELAYHOST AND DEFAULT/RELATRANSPORT ERRORS"
+sleep 5
+
+echo "DONT FORGET TO TAKE OUT THE EXTRA RELAYHOST AND DEFAULT/RELATRANSPORT ERRORS IN POSTFIX" > $HOME/dont-forget.txt
+
+echo "[smtp.mailgun.org]:2525 $mailgun_user:$mailgun_pass" > /etc/postfix/sasl_passwd
+postmap /etc/postfix/sasl_passwd
+
+chmod 600 /etc/postfix/sasl_passwd*
+
+/etc/init.d/postfix restart
+
+apt -y install mailutils
+
+echo 'Test passed. Email setup for marketing.d8thc.shop' | mail -s 'Test-Email-d8thc.shop' $email
+
+tail -n 5 /var/log/syslog
+
+
+
+#wget https://mauteam.org/wp-content/uploads/2019/10/cron-jobs.txt
+#echo "run: crontab cron-jobs.txt to put these in effect" > cron-jobs.README.txt
+
+#(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:segments:update > /dev/null 2>&1") | crontab -
+#(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:campaigns:trigger > /dev/null 2>&1") | crontab -
+#(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:campaigns:rebuild > /dev/null 2>&1") | crontab -
+#(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:iplookup:download > /dev/null 2>&1") | crontab -
+#(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:emails:send > /dev/null 2>&1") | crontab -
+#(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:email:fetch > /dev/null 2>&1") | crontab -
+#(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:social:monitoring > /dev/null 2>&1") | crontab -
+#(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:webhooks:process > /dev/null 2>&1") | crontab -
+#(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:broadcasts:send > /dev/null 2>&1") | crontab -
+#(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:import > /dev/null 2>&1") | crontab -
+#(crontab -l 2>/dev/null; echo "*/1 * * * * www-data /usr/bin/php /var/www/mautic/app/console mautic:campaigns:process_resets > /dev/null 2>&1") | crontab -
 
 ### Finished
 echo -e $"Done! \nYou have a new Mautic install on a virtual host \nYour new host is: https://$domain \nAnd its path and location is $web_root"
