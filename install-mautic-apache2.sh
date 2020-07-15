@@ -95,7 +95,7 @@ mysql -e "CREATE USER ${db_user}@localhost IDENTIFIED BY '${pass}';"
 mysql -e "GRANT ALL PRIVILEGES ON ${db_name}.* TO '${db_user}'@'localhost';"
 mysql -e "FLUSH PRIVILEGES;"
 
-cd
+cd ;
 
 curl -s https://api.github.com/repos/mautic/mautic/releases/latest \
 | grep "browser_download_url.*zip" \
