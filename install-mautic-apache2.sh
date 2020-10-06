@@ -224,7 +224,7 @@ chmod 600 /etc/postfix/sasl_passwd*
 
 apt -y install mailutils
 
-echo 'Test passed. Email setup for marketing.delta-8.shop' | mail -s 'Test-Email-delta-8.shop' $email
+echo "Test passed. Email setup for $domain " | mail -s "Test-Email-$domain" $email
 
 tail -n 5 /var/log/syslog
 
